@@ -1,0 +1,83 @@
+---
+title: "M Devoto"
+author: "J. Lacasa"
+date: "10/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(igraph)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+###Objetivo:  
+A partir de datos propios o suministrados por los docentes, estimar distintos índices que describan la estructura de redes bipartitas. Estimar la completitud de muestreo de una red ecológica.
+
+### Ejercicio 1a
+Buscar en http://www.web-of-life.es/ una red mutualista y una antagonista. Deben ser redes ponderadas
+Instalar el paquete bipartite  
+```{r data y libs}
+mutual <- read.csv("M_PL_040.csv", row.names = 1) # 
+mutual[is.na(mutual)] <- 0
+antag <- read.csv("FW_006.csv", row.names = 1) # 
+antag[is.na(antag)] <- 0
+
+library(bipartite)
+```
+
+Elegir de la ayuda de las funciones networklevel y specieslevel qué propiedades se van a analizar.  
+Para cada red calcular dos propiedades a nivel de red y dos a nivel de nodos.
+```{r }
+for (i in c("connectance","nestedness")){
+  print("m"); print(networklevel(mutual, index = i))
+  print("a"); print(networklevel(antag, index = i))
+}
+
+specieslevel(mutual, index = "degree")
+(specieslevel(mutual, index = "species strength")$`higher level`)$species.strength %>% hist()
+(specieslevel(mutual, index = "species strength")$`lower level`)$species.strength %>% hist()
+```
+
+Dibujar las redes con las funciones plotweb (cajas y flechas) y visweb (matriz)
+
+```{r plotweb}
+plotweb(mutual)
+plotweb(antag)
+```
+
+```{r visweb}
+visweb(mutual)
+visweb(antag)
+```
+
+### Ejercicio 1b (si alcanza el tiempo)  
+Calcular la modularidad de las redes con la función computeModules y dibujarlas con la función plotModuleWeb.
+
+```{r mod}
+computeModules(mutual) %>% plotModuleWeb()
+computeModules(antag) %>% plotModuleWeb()
+```
+
+### Ejercicio 2a  
+Instalar el paquete vegan
+
+Ver en la ayuda de la función estimateR cómo calcular índices de diversidad esperada.
+Para una de las redes del ejercicio anterior, calcular el número de interacciones únicas observadas. También se puede usar una de las redes tróficas de ayer. 
+
+```{r div esperada}
+estimateR(mutual[10:15,])# %>% plot()
+```
+
+Usando estimateR calcular el número de interacciones esperadas de la red según el índice de Chao1. Calcular también el error estándar.
+
+Calcular el porcentaje de interacciones detectado.
+
+```{r nro interacc}
+
+
+```
+
+Ejercicio 2b (si alcanza el tiempo)
+Leer ayuda de la función rarefy
+Dibujar un gráfico como el de la figura en el que se representa la curva rarificada de acumulación de interacciones observadas y el valor máximo esperado (con su error estándar).

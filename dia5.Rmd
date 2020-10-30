@@ -1,0 +1,100 @@
+---
+title: "Dia 5"
+author: "J. Lacasa"
+date: "10/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(igraph)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+## Trabajo práctico N°4  
+
+#### Responsable: M. Devoto   
+
+### Objetivo: Evaluar distintos determinantes de la estructura de una red, incluyendo el uso de modelos nulos. 
+
+
+### **Ejercicio 1**  
+Elegir una red (mutualista o trófica). Leerla en bipartite o igraph.  
+
+```{r data y libs}
+mutual <- read.csv("M_PL_040.csv", row.names = 1) # 
+mutual[is.na(mutual)] <- 0
+antag <- read.csv("FW_006.csv", row.names = 1); antag[is.na(antag)] <- 0
+
+library(bipartite)
+```
+
+Calcular tres métricas globales de la red  
+
+```{r metricas}
+networklevel(mutual, index= c("connectance", "nestedness","weighted nestedness", "weighted connectance"))
+```
+
+```{r null}
+n_sims <- 500
+nulls <- vegan::nullmodel(mutual, "r2dtable") # This algorithm keeps matrix sum and row/column sums constant.
+sims <- simulate(nulls,nsim = n_sims)
+dim(sims)
+
+r <- matrix(nrow=n_sims, ncol = 2) # create matrix w n_sims rows and 2 cols (1 per index) 
+
+for (i in 1:n_sims) { # for each simulation
+  r[i,] <- networklevel(sims[,,i], index=c("connectance", "nestedness")) # each row w indices
+}
+```
+Generar 100 redes en base a un modelo nulo (utilizando función nullmodel en paquete bipartite o función niche en paquete trophic).  
+
+**Especificar los parámetros del modelo nulo (por ejemplo, número de nodos igual a la red observada).**   
+This algorithm keeps matrix sum and row/column sums constant.  
+
+Calcular la probabilidad de que el valor observado pertenezca a la población de valores generada por el modelo nulo.  
+```{r prob}
+#t.test(x=r[,2], mu= 6.87340018, alternative = "two.sided")
+t.test(x=r[,2], mu= networklevel(mutual, index= c("nestedness")),
+       alternative = "two.sided")
+```
+
+Generar una figura que muestre la comparación entre los valores observados y los del modelo nulo.   
+```{r fig}
+r %>% as.data.frame() %>%
+  ggplot(aes(V2))+
+  geom_histogram(color="grey35", fill=NA)+
+  theme_bw()+
+  labs(x="Nestedness")+
+  geom_line(aes(x, y), data=data.frame(x=6.87340018, y=c(0,1)),
+            size=2.5, color="red")+
+  theme(aspect.ratio = 1)
+```
+
+
+### **Ejercicio 1b (si alcanza el tiempo)**
+Generar 100 redes en base a un modelo nulo distinto del primero.
+```{r rep}
+n_sims <- 500
+nulls2 <- vegan::nullmodel(mutual, "abuswap_r") # Sequential algorithm for count or nonnegative real valued matrices with fixed row frequencies (see also permatswap). The algorithm is similar to swap_count, but uses different swap value for each row of the 2 x 2 submatrix. Each step changes the the corresponding column sums, but honours matrix fill, row sums, and row/column frequencies
+sims2 <- simulate(nulls2,nsim = n_sims)
+
+r2 <- matrix(nrow=n_sims, ncol = 2)
+for (i in 1:n_sims) {
+  r2[i,] <- networklevel(sims2[,,i], index=c("connectance", "nestedness"))
+}
+
+t.test(x=r2[,2], mu= networklevel(mutual, index= c("nestedness")),
+       alternative = "two.sided")
+
+r2 %>% as.data.frame() %>%
+  ggplot(aes(V2))+
+  geom_histogram(color="grey35", fill=NA)+
+  theme_bw()+
+  labs(x="Nestedness")+
+  geom_line(aes(x, y), data=data.frame(x=6.87340018, y=c(0,1)),
+            size=2.5, color="red")+
+  theme(aspect.ratio = 1)
+```
+Comparar los resultados de ambos modelos nulos con los valores observados de las tres métricas elegidas.
+Incorporar los resultados a la figura anterior.

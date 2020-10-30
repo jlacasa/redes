@@ -1,0 +1,127 @@
+---
+title: "Practicos 1 y 2"
+author: "J. Lacasa"
+date: "10/28/2020"
+output: html_document
+---
+
+Data from: http://networkrepository.com/eco-mangwet.php  
+
+
+```{r in}
+m <- as.matrix(read.table("eco_mangwet.edges")) 
+net <- graph_from_data_frame(m)
+net <- igraph::set.edge.attribute(net, "weight", value=m[,3])
+
+plot(net,layout=layout.drl(net), vertex.label = NA, arrow.width=.2,
+     vertex.color="tomato")
+```
+
+```{r tk plo}
+summary(net)
+tkplot(net,  layout=layout.drl(net))
+```
+
+```{r otras medidas}
+summary(net)
+hist(closeness(net))
+hist(betweenness(net),breaks = 20 )
+
+centralization.betweenness(net)[-1]
+
+transitivity(net)
+
+modularity(net, membership = )
+
+wc <- cluster_walktrap(net)
+modularity(wc)
+membership(wc)
+hist(membership(wc))
+
+le <- cluster_spinglass(net)
+modularity(le)
+membership(le)
+hist(membership(le))
+hist(degree.distribution(net))
+
+cluster_infomap(net)
+```
+
+```{r infomap}
+plot(cluster_infomap(net), net,
+     vertex.label = NA,
+     layout=layout.drl(net))
+```
+
+
+```{r edge betw}
+plot(cluster_edge_betweenness(net), net,
+     #vertex.color="tomato",
+     vertex.label = NA,
+     arrow.width=.2, layouy=layout.kamada.kawai)
+```
+
+```{r leading eigen}
+plot(le, net, vertex.label = NA,
+     arrow.width=.2, layout=layout.drl(net))
+```
+
+hist(closeness(net, mode = "in", normalized = TRUE), main = NA, xlab = "in- Closeness")
+
+```{r h}
+hist(m[,3])
+
+sum(max_flow(net, source=V(net)[3], target=V(net)[13])$flow)
+V(net)[3] 
+```
+
+### Practico 2  
+#### Objetivo:  
+
+Calcular las principales métricas respecto del flujo interno de la red (transitividad, reciprocidad, modularidad),  
+
+identificar puntos de corte,  que nodo aumentaria nro de componentes en la red.  
+
+caminos más cortos, distancia promedio de los caminos más cortos, calcular el flujo máximo entre vértices puntuales a través de la red.
+
+Finalmente, realizar una determinación de comunidades o bloques cohesivos en la redes provistas (pueden explorar diferentes algoritmos) y graficarlos.
+
+
+```{r rec}
+transitivity(net)
+
+reciprocity(net)
+
+modularity(le)
+
+max_flow(net, source=V(net)[3], target=V(net)[13])
+
+shortest.paths(net, v=V(net)[3], to=V(net)[13])
+shortest.paths(net, v=V(net)[3], to=V(net)[12])
+
+```
+
+```{r transitividad}
+library(sna)
+library(statnet)
+cluster
+
+cp <- cutpoints(network(m),mode="digraph") 
+cp
+## aca habria que sacarle esos vertices al grapho
+articulation_points(net)
+
+gplot(network(m),gmode="digraph",vertex.col=cp+3,
+      coord=layout.drl(net),
+      jitter=FALSE,displaylabels=F)
+```
+
+```{r shortest path}
+shortest.paths(net, v=V(net)[3], to=V(net)[12])
+```
+
+Cosas que pasaron por el grupo  
+```{r }
+library(intergraph)
+net_net <- asNetwork(net)
+```
